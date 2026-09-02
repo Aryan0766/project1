@@ -1,1 +1,86 @@
-<h1>Hello World Wide Web!</h1>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bandhani Grid</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #4a1520;
+      }
+
+      #hint {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        color: #f5e6d3;
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hint">Move your mouse left → right: order → hand-tied chaos</div>
+    <script>
+      // Bandhani-inspired grid, in the spirit of Vera Molnar's
+      // "order vs. deviation" approach to generative art.
+
+      let cols = 10;
+      let rows = 10;
+      let spacing = 20;
+
+      // Bandhani-inspired palette: deep maroon ground, warm dye colors
+      let palette = ['#e8b923', '#e0533d', '#f5e6d3', '#c72c48'];
+
+      function setup () {
+        createCanvas(windowWidth, windowHeight);
+        noStroke();
+      }
+
+      function draw () {
+        background('#4a1520');
+
+        // chaos goes from 0 (perfect grid) to 1 (fully hand-tied/imperfect)
+        let chaos = constrain(mouseX / width, 0, 1);
+
+        let startX = (width - cols * spacing) / 2 + spacing / 2;
+        let startY = (height - rows * spacing) / 2 + spacing / 2;
+
+        for (let i = 0; i < cols; i++) {
+          for (let j = 0; j < rows; j++) {
+
+            // use a fixed seed per dot so it doesn't jitter every frame
+            randomSeed(i * 2 + j);
+
+            let baseX = startX + i * spacing;
+            let baseY = startY + j * spacing;
+
+            // deviation grows with chaos amount
+            let offsetX = random(-spacing * 0.9, spacing * 0.9) * chaos;
+            let offsetY = random(-spacing * 0.9, spacing * 0.9) * chaos;
+            let x = baseX + offsetX;
+            let y = baseY + offsetY;
+
+            // dot size also varies slightly with chaos (hand-tying imperfection)
+            let size = spacing * 0.55 + random(-8, 8) * chaos;
+
+            // outer dye ring
+            let c1 = color(random(palette));
+            fill(c1);
+            circle(x, y, size);
+
+            // inner "resist" dot (the tied point stays white/pale)
+            fill('#f5e6d3');
+            circle(x, y, size * 0.25);
+          }
+        }
+      }
+
+      function windowResized () {
+        resizeCanvas(windowWidth, windowHeight);
+      }
+    </script>
+  </body>
+</html>
