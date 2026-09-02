@@ -1,85 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <title>Bandhani Grid</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+
     <style>
+      html,
       body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
-        background: #4a1520;
+        background: #f5e6d3;
       }
 
-      #hint {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        color: #f5e6d3;
-        font-family: sans-serif;
-        font-size: 14px;
+      canvas {
+        display: block;
       }
     </style>
   </head>
+
   <body>
-    <div id="hint">Move your mouse left → right: order → hand-tied chaos</div>
     <script>
-      // Bandhani-inspired grid, in the spirit of Vera Molnar's
-      // "order vs. deviation" approach to generative art.
+      let spacing = 25;
+      let cols;
+      let rows;
 
-      let cols = 10;
-      let rows = 10;
-      let spacing = 20;
+      let palette = [
+        '#d1495b',
+        '#edae49',
+        '#00798c',
+        '#30638e',
+        '#003d5b',
+        '#7b2cbf'
+      ];
 
-      // Bandhani-inspired palette: deep maroon ground, warm dye colors
-      let palette = ['#e8b923', '#e0533d', '#f5e6d3', '#c72c48'];
-
-      function setup () {
+      function setup() {
         createCanvas(windowWidth, windowHeight);
         noStroke();
+
+        cols = ceil(width / spacing) + 10;
+        rows = ceil(height / spacing) + 10;
       }
 
-      function draw () {
-        background('#4a1520');
+      function draw() {
+        // A slightly transparent background creates soft visual trails.
+        background(245, 230, 211, 40);
 
-        // chaos goes from 0 (perfect grid) to 1 (fully hand-tied/imperfect)
+        // Mouse left/right = organized to chaotic
         let chaos = constrain(mouseX / width, 0, 1);
 
-        let startX = (width - cols * spacing) / 2 + spacing / 2;
-        let startY = (height - rows * spacing) / 2 + spacing / 2;
+        // Mouse top/bottom = smaller to larger, more spread-out squares
+        let bleed = constrain(mouseY / height, 0, 1);
+
+        // Start outside the visible canvas so shifted squares cover every edge.
+        let startX = -spacing * 2;
+        let startY = -spacing * 2;
 
         for (let i = 0; i < cols; i++) {
           for (let j = 0; j < rows; j++) {
-
-            // use a fixed seed per dot so it doesn't jitter every frame
-            randomSeed(i * 2 + j);
+            // Fixed seed makes each grid position have its own stable character.
+            randomSeed(i * 2000 + j);
 
             let baseX = startX + i * spacing;
             let baseY = startY + j * spacing;
 
-            // deviation grows with chaos amount
+            // The square moves farther from its grid location as chaos grows.
             let offsetX = random(-spacing * 0.9, spacing * 0.9) * chaos;
             let offsetY = random(-spacing * 0.9, spacing * 0.9) * chaos;
+
             let x = baseX + offsetX;
             let y = baseY + offsetY;
 
-            // dot size also varies slightly with chaos (hand-tying imperfection)
-            let size = spacing * 0.55 + random(-8, 8) * chaos;
+            // Each square gently pulses at a different rate/phase.
+            let pulse = sin(frameCount * 0.02 + i * 0.2 + j * 0.2) * 15;
 
-            // outer dye ring
-            let c1 = color(random(palette));
-            fill(c1);
-            circle(x, y, size);
+            // Moving downward makes the colored square larger.
+            let size =
+              spacing * (0.5 + bleed * 1.3) +
+              random(-10, 10) * chaos +
+              pulse;
 
-            // inner "resist" dot (the tied point stays white/pale)
+            let outerColor = color(random(palette));
+            outerColor.setAlpha(map(bleed, 0, 1, 230, 80));
+
+            push();
+            translate(x, y);
+
+            // Squares rotate more when the mouse is farther right.
+            rotate(random(-PI, PI) * chaos);
+
+            rectMode(CENTER);
+            noStroke();
+
+            // Outer dyed square.
+            fill(outerColor);
+            square(0, 0, size);
+
+            // Inner resist square.
             fill('#f5e6d3');
-            circle(x, y, size * 0.25);
+            let resistSize = size * map(bleed, 0, 1, 0.55, 0.12);
+            square(0, 0, resistSize);
+
+            pop();
           }
         }
       }
 
-      function windowResized () {
+      function windowResized() {
         resizeCanvas(windowWidth, windowHeight);
+
+        cols = ceil(width / spacing) + 4;
+        rows = ceil(height / spacing) + 4;
       }
     </script>
   </body>
