@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Casey Reas Inspired Squares</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/2.3.3/p5.min.js"></script>
 
     <style>
       html,
@@ -21,96 +24,81 @@
 
   <body>
     <script>
-      let spacing = 20;
-      let cols;
-      let rows;
+      const spacing = 20;
+      let squares = [];
 
-      let palette = [
-        '#d1495b',
-        '#edae49',
-        '#00798c',
-        '#30638e',
-        '#003d5b',
-        '#7b2cbf'
+      //Color recomendation taken from AI.
+      const palette = [
+        "#ef476f", // coral pink
+        "#e63973", // magenta
+        "#9d4edd", // violet
+        "#5a189a", // deep purple
+        "#ff9f1c", // warm orange
+        "#ffd166", // soft golden yellow
+        "#2b2d6e" // dark indigo
       ];
 
-      function setup() {
+      function setup () {
         createCanvas(windowWidth, windowHeight);
         noStroke();
+        rectMode(CENTER);
 
-        cols = ceil(width / spacing) + 10;
-        rows = ceil(height / spacing) + 10;
+        makeGrid();
       }
 
-      function draw() {
-        // A slightly transparent background creates soft visual trails.
-        background(245, 230, 211, 40);
+      function makeGrid () {
+        squares = [];
 
-        // Mouse left/right = organized to chaotic
-        let chaos = constrain(mouseX / width, 0, 1);
-
-        // Mouse top/bottom = smaller to larger, more spread-out squares
-        let bleed = constrain(mouseY / height, 0, 1);
-
-        // Start outside the visible canvas so shifted squares cover every edge.
-        let startX = -spacing * 2;
-        let startY = -spacing * 2;
-
-        for (let i = 0; i < cols; i++) {
-          for (let j = 0; j < rows; j++) {
-            // Fixed seed makes each grid position have its own stable character.
-            randomSeed(i * 2000 + j);
-
-            let baseX = startX + i * spacing;
-            let baseY = startY + j * spacing;
-
-            // The square moves farther from its grid location as chaos grows.
-            let offsetX = random(-spacing * 0.9, spacing * 0.9) * chaos;
-            let offsetY = random(-spacing * 0.9, spacing * 0.9) * chaos;
-
-            let x = baseX + offsetX;
-            let y = baseY + offsetY;
-
-            // Each square gently pulses at a different rate/phase.
-            let pulse = sin(frameCount * 0.03 + i + j) * 10;
-             //.03= speed of pulsing // 
-            // Moving downward makes the colored square larger.
-            let size =
-              spacing * (0.10 + bleed * 10) +
-              random(-10, 10) * chaos +
-              pulse;
-
-            let outerColor = color(random(palette));
-            outerColor.setAlpha(map(bleed, 0, 1, 230, 80));
-
-            push();
-            translate(x, y);
-
-            // Squares rotate more when the mouse is farther right.
-            rotate(random(-PI, PI) * chaos);
-
-            rectMode(CENTER);
-            noStroke();
-
-            // Outer dyed square.
-            fill(outerColor);
-            square(0, 0, size);
-
-            // Inner resist square.
-            fill('#f5e6d3');
-            let resistSize = size * map(bleed, 0, 1, 0.55, 0.12);
-            square(0, 0, resistSize);
-
-            pop();
+        for (let x = -spacing; x < width + spacing; x += spacing) {
+          for (let y = -spacing; y < height + spacing; y += spacing) {
+            squares.push({
+              x: x,
+              y: y,
+              color: random(palette),
+              offsetX: random(-spacing, spacing),
+              offsetY: random(-spacing, spacing),
+              rotation: random(-PI, PI),
+              sizeChange: random(-8, 8)
+            });
           }
         }
       }
+ // RESCOURCES USED: THE CODEING TRAIN( YOUTUBE VIDEO)
+      function draw () {
+        background(255, 242, 230, 20);
 
-      function windowResized() {
+        const chaos = constrain(mouseX / width, 0, 1);
+        const bleed = constrain(mouseY / height, 0, 1);
+
+        for (const item of squares) {
+          const x = item.x + item.offsetX * chaos;
+          const y = item.y + item.offsetY * chaos;
+
+          const size =
+            spacing * (0.4 + bleed * 4) +
+            item.sizeChange * chaos;
+
+          const outerColor = color(item.color);
+          outerColor.setAlpha(map(bleed, 0, 1, 230, 80));
+          // Save the canvas setting before changing the position and rotation.
+          push();
+          translate(x, y);
+          // Rotate the square around its center.
+          rotate(item.rotation * chaos);
+
+          fill(outerColor);
+          square(0, 0, size);
+
+          fill("#f5e6d3");
+          square(0, 0, size * map(bleed, 0, 1, 0.55, 0.12));
+          // Restore the original canvas position and rotation
+          pop();
+        }
+      }
+
+      function windowResized () {
         resizeCanvas(windowWidth, windowHeight);
-
-        cols = ceil(width / spacing) + 4;
-        rows = ceil(height / spacing) + 4;
+        makeGrid();
       }
     </script>
   </body>
